@@ -75,3 +75,103 @@ public static void main(String[] args) throws UnsupportedEncodingException {
     }
 ```
 
+
+
+# IO流
+
+## IO流概述
+
+### 什么是IO流
+
+IO流也称为输入、输出流，就是用来读写数据的。
+
+* I表示intput,是数据从硬盘文件读入到内存的过程，称之输入，负责读。
+
+* O表示output,是内存程序的数据从内存到写出到硬盘文件的过程，称之输出，负责写。
+
+![](https://pic1.imgdb.cn/item/6348d40c16f2c2beb15bb329.jpg)
+
+
+
+### IO流的分类
+
+* ==按流的方向分为：输入流和输出流==
+* ==按流中的数据最小单位分为：字节流（更适合音视频文件，可以操作所有类型文件）和字符流（只能操作纯文本文件）==
+
+> 流的四大类
+
+* 字节输入流：以内存为基准，来自磁盘文件/网络中的数据**以字节的形式读入到内存中**去的流称为字节输入流。
+
+* 字节输出流：以内存为基准，把内存中的数据**以字节写出到磁盘文件或者网络中**去的流称为字节输出流。
+
+* 字符输入流：以内存为基准，来自磁盘文件/网络中的数据**以字符的形式读入到内存中**去的流称为字符输入流。
+
+* 字符输出流：以内存为基准，把内存中的数据**以字符写出到磁盘文件或者网络介质中**去的流称为字符输出流。
+
+![](https://pic1.imgdb.cn/item/6348d50c16f2c2beb15d2073.jpg)
+
+> 四类流都是抽象类，需要使用子类操作
+
+![](https://pic1.imgdb.cn/item/6348d5b216f2c2beb15e06e1.jpg)
+
+### 总结
+
+![](https://pic1.imgdb.cn/item/6348d62c16f2c2beb15ea69b.jpg)
+
+
+
+## 字节流的使用
+
+### 文件输入流：每次读取一个字节
+
+![](https://pic1.imgdb.cn/item/6348d6e316f2c2beb15faa06.jpg)
+
+> 文件字节输入流FileInputStream
+
+* 作用 ：以内存为基准，把磁盘文件中的数据以字节的形式读取到内存中去。
+  * 构造器
+    * public FileInputStream（File file）创建字节输入流管道与源文件对象接通
+    * public FilelnputStream(String pathname) 创建字节输入流管道与源文件路径接通
+
+* * 方法
+
+    * public int read（）每次读取一个字节返回，如果字节已经没有可读的返回-1
+    * public int read(byte[]buffer) 每次读取一个字节数组返回，如果字节已经没有可读的返回-1
+
+    ```java
+     public static void main(String[] args) throws Exception {
+            // 1、创建一个文件字节输入流管道与源文件接通
+    //        InputStream is = new FileInputStream(new File("day09-oop-demo/src/data.txt"));
+            // 简化写法
+            InputStream is = new FileInputStream("day09-oop-demo/src/data.txt");
+    
+            // 2、读取字节返回（每次一个字节太麻烦，使用循环改进）
+            // 定义一个变量记录每次读取的字节
+            int b;
+            while ((b = is.read()) != -1){
+                System.out.print((char) b);
+            }
+            // 这个方法无法读取中文
+    
+        }
+    ```
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 总结
+
+* 读取一个字节的api是 **public int read()**	但是**性能慢，无法读取中文**
+
+  
