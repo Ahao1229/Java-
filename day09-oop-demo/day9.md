@@ -1,4 +1,4 @@
-# 字符集
+# 一、字符集
 
 * 计算机底层不可以直接存储字符的。计算机中底层只能存储二进制(0、1)
 * 二进制是可以转换成十进制的
@@ -9,17 +9,17 @@
 
 
 
-## ASCII字符集
+## 1、ASCII字符集
 
 * ASCII(American Standard Code for Information Interchange,美国信息交换标准代码)：包括了数字、英文、符号。
 * **ASCII使用1个字节存储一个字符，一个字节是8位**，总共可以表示128个字符信息，对于英文，数字来说是够用的。
 
-## GBK
+## 2、GBK
 
 * window系统默认的码表。兼容ASCII码表，也包含了几万个汉字，并支持繁体汉字以及部分日韩文字。
 * 注意：**GBK是中国的码表，一个中文以两个字节的形式存储。**但不包含世界上所有国家的文字
 
-## Unicode码表
+## 3、Unicode码表
 
 * unicode(又称统一码、万国码、单一码)是计算机科学领域里的一项业界字符编码标准。
 
@@ -41,11 +41,11 @@
 
 
 
-## 总结
+## 4、总结
 
 ![](https://pic1.imgdb.cn/item/6348cc3216f2c2beb14fec92.jpg)
 
-## 代码
+## 5、代码
 
 ```java
 public static void main(String[] args) throws UnsupportedEncodingException {
@@ -77,11 +77,11 @@ public static void main(String[] args) throws UnsupportedEncodingException {
 
 
 
-# IO流
+# 二、IO流
 
-## IO流概述
+## 1、IO流概述
 
-### 什么是IO流
+### 1.1 什么是IO流
 
 IO流也称为输入、输出流，就是用来读写数据的。
 
@@ -93,12 +93,12 @@ IO流也称为输入、输出流，就是用来读写数据的。
 
 
 
-### IO流的分类
+### 1.2 IO流的分类
 
 * ==按流的方向分为：输入流和输出流==
 * ==按流中的数据最小单位分为：字节流（更适合音视频文件，可以操作所有类型文件）和字符流（只能操作纯文本文件）==
 
-> 流的四大类
+> **流的四大类**
 
 * 字节输入流：以内存为基准，来自磁盘文件/网络中的数据**以字节的形式读入到内存中**去的流称为字节输入流。
 
@@ -110,23 +110,25 @@ IO流也称为输入、输出流，就是用来读写数据的。
 
 ![](https://pic1.imgdb.cn/item/6348d50c16f2c2beb15d2073.jpg)
 
-> 四类流都是抽象类，需要使用子类操作
+> **四类流都是抽象类，需要使用子类操作**
 
 ![](https://pic1.imgdb.cn/item/6348d5b216f2c2beb15e06e1.jpg)
 
-### 总结
+### 1.3 总结
 
 ![](https://pic1.imgdb.cn/item/6348d62c16f2c2beb15ea69b.jpg)
 
 
 
-## 字节流的使用
+## 2、字节流的使用
 
-### 文件输入流：每次读取一个字节
+### 2.1 文件输入流
+
+* **文件输入流：每次读取一个字节**
 
 ![](https://pic1.imgdb.cn/item/6348d6e316f2c2beb15faa06.jpg)
 
-> 文件字节输入流FileInputStream
+> **文件字节输入流FileInputStream**
 
 * 作用 ：以内存为基准，把磁盘文件中的数据以字节的形式读取到内存中去。
   * 构造器
@@ -202,9 +204,7 @@ IO流也称为输入、输出流，就是用来读写数据的。
   
   * ​	
 
-
-
-### 总结
+> **总结**
 
 * 读取一个字节的api是 **public int read()**	但是**性能慢，无法读取中文**
 
@@ -217,9 +217,9 @@ IO流也称为输入、输出流，就是用来读写数据的。
 
 
 
-### 文件字节输出流
+### 2.2 文件字节输出流
 
-> 1、字节输入写数据的方法有三种
+> **1、字节输入写数据的方法有三种**
 
 public void write(int a)写一个字节出去
 
@@ -227,15 +227,15 @@ public void write(byte[]buffer) 写一个字节数组出去
 
 public void write(byte[]buffer , int pos,int len) 写一个字节数组的一部分出去。
 
-> 2、字节输出流如何实现数据追加
+> **2、字节输出流如何实现数据追加**
 
 public FileOutputStream(String filepath , boolean append)创建字节输出流管道与源文件路径接通，可追加数据
 
-> 3、字节输出流如何实现写出去的数据能换行
+> **3、字节输出流如何实现写出去的数据能换行**
 
 os.write("\r\n".getBytes())
 
-> 4.如何让写出去的数据能成功生效
+> **4.如何让写出去的数据能成功生效**
 
 - flush() 刷新数据
 - close() 方法是关闭流，关闭包含刷新，关闭后流不可以继续使用了。
@@ -274,4 +274,185 @@ public static void main(String[] args) throws Exception {
         os.close();
     }
 ```
+
+
+
+### 2.3 文件拷贝
+
+> **案例分析：**
+
+![](https://pic1.imgdb.cn/item/634e040316f2c2beb1a40648.jpg)
+
+> **案例代码：**
+
+```java
+ public static void main(String[] args){
+        try {
+            // 1、创建一个字节输入流管道与原视频沟通
+            InputStream is = new FileInputStream("day09-oop-demo/src/AnotherHardcoreGame 2022-04-09 15-05-20.mp4");
+
+            // 2、创建一个字节输出流管道与目标文件接通
+            OutputStream os = new FileOutputStream("day09-oop-demo/src/CopyAnotherHardCoreGame.mp4");
+
+            // 3、定义一个字节数组来转移数据
+            byte[] buffer = new byte[1024];
+            int len; // 记录每次读取的字节数
+            while ((len = is.read(buffer)) != -1){
+                os.write(buffer , 0 , len);
+            }
+            System.out.println("复制完成了！");
+
+            // 4、关闭流
+            is.close();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+```
+
+> **内存分析**
+
+![](https://pic1.imgdb.cn/item/634e06e316f2c2beb1a79ed1.jpg)
+
+> **为什么字节流适合做一切文件数据的拷贝？**
+
+* 任何文件的底层都是字节，拷贝是一字不漏的转移字节，只要前后文件格式、编码一致没有任何问题。
+
+
+
+### 3、资源释放的方式
+
+#### 3.1 try-catch-finally
+
+* **finally**：在异常处理时提供finally块来执行所有清除操作，比如说IO流中的释放资源
+* **==特点：被finally控制的语句最终一定会执行，除非JVM退出(即使代码中存在return结束，也一定会执行finally)==**
+* 异常处理标准格式：**try..catch..finally**
+
+> **try-catch-finally格式：**
+
+![](https://pic1.imgdb.cn/item/634e0ce116f2c2beb1afd18a.jpg)
+
+> **try-catch-finally案例代码：**
+
+```java
+ public static void main(String[] args){
+        // 将管道定义为全局，否则在finally中无法调用关闭
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            // 1、创建一个字节输入流管道与原视频沟通
+           is = new FileInputStream("day09-oop-demo/src/data04.txt");
+
+            // 2、创建一个字节输出流管道与目标文件接通
+           os = new FileOutputStream("day09-oop-demo/src/CopyData05.txt");
+
+            // 3、定义一个字节数组来转移数据
+            byte[] buffer = new byte[1024];
+            int len; // 记录每次读取的字节数
+            while ((len = is.read(buffer)) != -1){
+                os.write(buffer , 0 , len);
+            }
+//            System.out.println(10 / 0);
+            System.out.println("复制完成了！");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            // 无论代码是否正常结束，都会执行这里，除非JVM挂掉
+            System.out.println("-----------finally-----------");
+            // 4、关闭流
+            try {
+                // 防止管道使用前出现异常，导致关闭管道抛出空指针异常
+                if (os != null){
+                    os.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                // 防止管道使用前出现异常，导致关闭管道抛出空指针异常
+                if (is != null){
+                    is.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        System.out.println(test(10,2));
+    }
+
+    public static int test (int a , int b){
+        try {
+            int c = a / b;
+        }catch (Exception e){
+            e.printStackTrace();
+            return -1;
+        }finally {
+            // 这里的代码即使上面已经return,也必须执行完这里才可以结束
+            // 开发中不建议在这里加return,如果加了，返回的永远是这里的数据了，这样会出问题！
+            return 100;
+        }
+    }
+```
+
+**运行结果为：**
+
+​	复制完成了！
+
+​	-----------finally-----------
+
+​	100
+
+> **try-catch-finally的作用**
+
+* finally代码块是最终一定要执行的，可以在代码执行完毕
+  的最后用于释放资源。
+* 除非System.exit(0)，挂掉虚拟机，就是删库跑路，千万别做！
+
+
+
+#### 3.2 改进方法
+
+![](https://pic1.imgdb.cn/item/634e11fe16f2c2beb1b6f070.jpg)
+
+> **实现代码：**
+
+```java
+ public static void main(String[] args){
+        try (
+                // 这里面只能放置资源对象，用完自动关闭，自动调用资源对象的close方法关闭资源（即使出现异常也会做关闭操作）
+                // 1、创建一个字节输入流管道与原视频沟通
+               InputStream is = new FileInputStream("day09-oop-demo/src/data04.txt");
+                // 2、创建一个字节输出流管道与目标文件接通
+                OutputStream os = new FileOutputStream("day09-oop-demo/src/CopyData05.txt");
+                ) {
+
+            // 3、定义一个字节数组来转移数据
+            byte[] buffer = new byte[1024];
+            int len; // 记录每次读取的字节数
+            while ((len = is.read(buffer)) != -1){
+                os.write(buffer , 0 , len);
+            }
+//            System.out.println(10 / 0);
+            System.out.println("复制完成了！");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+```
+
+> **注意事项：**
+
+* **JDK7 以及 JDK9 的()中只能放置资源对象，否则报错**
+* **什么是资源呢？**
+  * **资源都是实现了Closeable / AutoCloseable接口的类对象**
+  * **例如：**
+    * **public abstract class InputStream implements Closeable{}**
+    * **public abstract class OutputStream implements Closeable , Flushable{}**
 

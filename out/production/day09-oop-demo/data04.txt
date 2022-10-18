@@ -1,1 +1,4 @@
-abaabc我是中国人bc
+ab
+aabc
+我是中国人
+bc
