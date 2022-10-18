@@ -11,7 +11,8 @@ public class TryCatchResourceDemo3 {
         InputStream is = new FileInputStream("day09-oop-demo/src/data04.txt");
         // 2、创建一个字节输出流管道与目标文件接通
         OutputStream os = new FileOutputStream("day09-oop-demo/src/CopyData05.txt");
-        try (is ; os) {
+        // try  (is ; os) {}
+        try{
 
             // 3、定义一个字节数组来转移数据
             byte[] buffer = new byte[1024];

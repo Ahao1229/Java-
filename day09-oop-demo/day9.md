@@ -322,9 +322,9 @@ public static void main(String[] args) throws Exception {
 
 
 
-### 3、资源释放的方式
+## 3、资源释放的方式
 
-#### 3.1 try-catch-finally
+### 3.1 try-catch-finally
 
 * **finally**：在异常处理时提供finally块来执行所有清除操作，比如说IO流中的释放资源
 * **==特点：被finally控制的语句最终一定会执行，除非JVM退出(即使代码中存在return结束，也一定会执行finally)==**
@@ -415,7 +415,7 @@ public static void main(String[] args) throws Exception {
 
 
 
-#### 3.2 改进方法 try-catch-resource
+### 3.2 改进方法 try-catch-resource
 
 ![](https://pic1.imgdb.cn/item/634e165116f2c2beb1bd2348.jpg)
 
@@ -485,3 +485,93 @@ public static void main(String[] args) throws Exception {
 > **try-catch-resource的作用**
 
 * 自动释放资源、代码简洁
+
+
+
+## 4、字符流的使用
+
+> **为什么要使用字符流**
+
+* **字节流读取中文输出会乱码、也存在内存溢出的可能**
+* **字符流更适合读取中文，因为最小单位是按照单个字符读取****
+
+![](https://pic1.imgdb.cn/item/634e196b16f2c2beb1c1ae94.jpg)
+
+
+
+### 4.1 文件字符输入流Reader（一次读取一个字符）
+
+* **每次读取字符的api是：public int read()  每次读取一个字符返回，如果字节已经没有可读的返回-1**
+
+*  **读取中文字符不会出现乱码（如果代码和文件编码一致）**
+* **性能较慢**
+
+> **代码：**
+
+```java
+public static void main(String[] args) throws Exception{
+        // 目标：每次读取一个字符。
+        // 1、创建一个字符输入楼管道与源文件接通
+        Reader fr = new FileReader("day09-oop-demo/src/CopyData05.txt");
+
+        // 2、使用循环读取字符返回，没有可读的字符是会返回-1；
+        int code;
+        while ((code = fr.read()) != -1){
+            System.out.print((char) code);
+        }
+    }
+```
+
+
+
+### 4.2 文件字符输入流FileReader（一次读取一个字符数组）
+
+* **作用：以内存为基准，把磁盘文件中的数据以字符的形式读取到内存中去。**
+
+* **public int read(char[] buffer)每次读取一个字符数组，返回读取的字符数，如果字符已经没有可读的返回-1**
+
+* **性能得到提升**
+
+> **代码：**
+
+```java
+public static void main(String[] args) throws Exception{
+        // 目标：每次读取一个字符。
+        // 1、创建一个字符输入楼管道与源文件接通
+        Reader fr = new FileReader("day09-oop-demo/src/Data06.txt");
+
+        // 2、用循环，每次读取一个字符数组的数据
+        char[] buffer = new char[1024]; // 1K字符
+        int len;
+        while ((len = fr.read(buffer)) != -1){
+            String rs = new String(buffer , 0 ,len);
+            System.out.println(rs);
+        }
+
+    }
+```
+
+
+
+### 4.3 文件字符输出流FileWriter
+
+* 字符输出流写数据的方法有：
+  * void write( int c ) 写一个字符
+  * void write( char[]cbuf ) 写入一个字符数组
+  * void write( char[]cbuf , int off , int len ) 写入字符数组的一部分
+  * void write( String str ) 写一个字符串
+  * void write( String str , int off , int len ) 写一个字符串的一部
+  * void write( int c ) 写一个字符
+
+* public FileWriter(String filepath,boolean append) 创建字符输出流管道与源文件路径接通可追加数据
+
+* 字符输出流实现写出去的数据能换行：fw.write(r\n")
+
+* 字符输出流写完数据后必须做什么？
+  * flush()刷新数据。
+  * close()方法是关闭流，关闭包含刷新，关闭后流不可以继续使用了。
+
+* 字节流、字符流如何选择使用？
+  * 字节流适合做一切文件数据的拷贝（音视频，文本）
+  * 字节流不适合读取中文内容输出
+  * 字符流适合做文本文件的操作（读，写）
