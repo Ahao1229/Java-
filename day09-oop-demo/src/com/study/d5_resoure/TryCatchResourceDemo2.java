@@ -2,6 +2,9 @@ package com.study.d5_resoure;
 
 import java.io.*;
 
+/**
+ * JDK7 做资源释放优化
+ */
 public class TryCatchResourceDemo2 {
     public static void main(String[] args){
         try (

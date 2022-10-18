@@ -415,11 +415,11 @@ public static void main(String[] args) throws Exception {
 
 
 
-#### 3.2 改进方法
+#### 3.2 改进方法 try-catch-resource
 
-![](https://pic1.imgdb.cn/item/634e11fe16f2c2beb1b6f070.jpg)
+![](https://pic1.imgdb.cn/item/634e165116f2c2beb1bd2348.jpg)
 
-> **实现代码：**
+> **JDK7 实现代码：**
 
 ```java
  public static void main(String[] args){
@@ -447,6 +447,32 @@ public static void main(String[] args) throws Exception {
     }
 ```
 
+> **JDK9 实现代码：（了解）**
+
+```java
+public static void main(String[] args) throws Exception {
+        // 1、创建一个字节输入流管道与原视频沟通
+        InputStream is = new FileInputStream("day09-oop-demo/src/data04.txt");
+        // 2、创建一个字节输出流管道与目标文件接通
+        OutputStream os = new FileOutputStream("day09-oop-demo/src/CopyData05.txt");
+        try (is ; os) {
+
+            // 3、定义一个字节数组来转移数据
+            byte[] buffer = new byte[1024];
+            int len; // 记录每次读取的字节数
+            while ((len = is.read(buffer)) != -1){
+                os.write(buffer , 0 , len);
+            }
+//            System.out.println(10 / 0);
+            System.out.println("复制完成了！");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+```
+
 > **注意事项：**
 
 * **JDK7 以及 JDK9 的()中只能放置资源对象，否则报错**
@@ -456,3 +482,6 @@ public static void main(String[] args) throws Exception {
     * **public abstract class InputStream implements Closeable{}**
     * **public abstract class OutputStream implements Closeable , Flushable{}**
 
+> **try-catch-resource的作用**
+
+* 自动释放资源、代码简洁
