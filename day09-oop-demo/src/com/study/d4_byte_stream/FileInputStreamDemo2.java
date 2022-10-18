@@ -1,13 +1,12 @@
 package com.study.d4_byte_stream;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 /**
  *  目标：使用文件字节输入流每次读取一个字节数组的数据
  */
-public class FileInputDemo2 {
+public class FileInputStreamDemo2 {
     public static void main(String[] args) throws Exception {
         // 1、创建一个文件字节流入管道与源文件接通
         InputStream is = new FileInputStream("day09-oop-demo/src/com/study/data02.txt");

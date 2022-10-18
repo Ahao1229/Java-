@@ -158,7 +158,7 @@ IO流也称为输入、输出流，就是用来读写数据的。
 
     
 
-* 每次读入一个字节数组的数据（依然无法阻止乱码）
+* 每次读入一个字节数组的数据**（依然无法阻止乱码）**
 
   ```Java
    public static void main(String[] args) throws Exception {
@@ -177,13 +177,30 @@ IO流也称为输入、输出流，就是用来读写数据的。
 
    
 
+* **一次性读取完文件的全部字节就可以保证输出不乱码，但如果文件过大，字节数组可能引起内存溢出**
 
+  * 方式一：自己定义一个字节数组与文件的大小一样大，然后使用读取字节数组的方法，一次性读取完成
 
-
-
-
-
-
+  ```java
+   // 1、创建一个文件字节输入流管道与源文件接通
+          File f  = new File("day09-oop-demo/src/data03.txt");
+          InputStream is = new FileInputStream(f);
+  
+   // 2、定义一个数组与文件的大小一样大
+  //        byte[] buffer = new byte[(int) f.length()];
+  //        int len = is.read(buffer);
+  //        System.out.println("读取了多少个字节:" + len);
+  //        System.out.println("文件大小:" + f.length());
+  //        System.out.println(new String(buffer));
+  
+          //读取全部字节数组 （API）
+          byte[] buffer = is.readAllBytes();
+          System.out.println(new String(buffer));
+  ```
+  
+  
+  
+  * ​	
 
 
 
@@ -191,4 +208,70 @@ IO流也称为输入、输出流，就是用来读写数据的。
 
 * 读取一个字节的api是 **public int read()**	但是**性能慢，无法读取中文**
 
+* 读取一个字节数组的api是 public int read（） **读取性能得到了提升，但依然无法阻止乱码**
+
+* **字节输入流读取中文内容不乱码：**
+
+  **一次读完全部字节有两种方法：定义与文件一样大的字节数组读取（如果文件过大可能引起内存溢出），或者使用官方API。****
   
+
+
+
+### 文件字节输出流
+
+> 1、字节输入写数据的方法有三种
+
+public void write(int a)写一个字节出去
+
+public void write(byte[]buffer) 写一个字节数组出去
+
+public void write(byte[]buffer , int pos,int len) 写一个字节数组的一部分出去。
+
+> 2、字节输出流如何实现数据追加
+
+public FileOutputStream(String filepath , boolean append)创建字节输出流管道与源文件路径接通，可追加数据
+
+> 3、字节输出流如何实现写出去的数据能换行
+
+os.write("\r\n".getBytes())
+
+> 4.如何让写出去的数据能成功生效
+
+- flush() 刷新数据
+- close() 方法是关闭流，关闭包含刷新，关闭后流不可以继续使用了。
+
+```java
+public static void main(String[] args) throws Exception {
+        // 1、创建一个文件字节输出流管道与目标文件接通
+       // OutputStream os = new FileOutputStream("day09-oop-demo/src/data04.txt"); // 覆盖管道，先清空之前的数据，写数据进去
+        OutputStream os = new FileOutputStream("day09-oop-demo/src/data04.txt" , true); // 追加管道，写之前不会清空写
+        // 2、写数据出去
+        // a. public void write(int a): 写一个字节
+        os.write('a');
+        os.write(98);
+        os.write("\r\n".getBytes(StandardCharsets.UTF_8)); // 换行
+//        os.write('李'); // 中文三个字节，所以会乱码
+
+        // 写数据必须刷新数据，不然可能没有同步到文件中，刷新后流可以接着使用
+        os.flush();
+
+        // b. public void write(byte[] buffer):写一个字节数组
+        byte[] buffer = {'a', 97, 98, 99};
+        os.write(buffer);
+        os.write("\r\n".getBytes(StandardCharsets.UTF_8)); // 换行
+        
+        byte[] buffer2 = "我是中国人".getBytes(StandardCharsets.UTF_8); // 可以编码传写
+        os.write(buffer2);
+        os.write("\r\n".getBytes(StandardCharsets.UTF_8)); // 换行
+        
+        // c. public void write(byte[] buffer , int pos , int len):写一个字节数组的一部分出去
+        byte[] buffer3 = {'a', 97,98,99,100,101,102,103};
+        os.write(buffer3, 2 , 2);
+        os.write("\r\n".getBytes(StandardCharsets.UTF_8)); // 换行
+
+        
+        // 释放资源，用完关掉节省内存空间（包含刷新）,关闭后流不可以使用
+        os.close();
+    }
+```
+
