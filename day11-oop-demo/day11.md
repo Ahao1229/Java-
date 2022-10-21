@@ -372,3 +372,834 @@ public class TreadDemo3 {
 | 实现Runnable接口 |        扩展性强，实现该接口的同时还可以继承其他的类。        |          编程相对复杂，不能返回线程执行的结果          |
 | 实现Callable接口 | 扩展性强，实现该接口的同时还可以继承其他的类。可以得到线程执行的结果 |                      编程相对复杂                      |
 
+
+
+# 三、Thread的常用方法
+
+## 1、Thread常用API说明
+
+* Thread常用方法：获取线程名称getName()、设置名称setName()、获取当前线程对象currentThread()。
+* 至于Thread类提供的诸如：yield、join、interrupt、不推荐的方法stop、守护线程、线程优先级等线程的控制方法，在开发中很少使用。
+
+> **当有很多线程在执行的时候，怎么区分这些线程？**
+
+* 此时需要使用Thread的常用方法：getName)、setName()、
+  currentThread()等。
+
+> **Thread获取和设置线程名称**
+
+* String getName()    获取当前线程的名称，默认线程名称是Thread-索引
+* void setName(String name)    将此线程的名称更改为指定的名称，通过构造器也可以设置线程名称 
+
+> **Thread构造器**
+
+* public Thread(String name)   可以为当前线程指定名称
+* public Thread(Runnable target)   封装Runnable对象成为线程对象
+* public Thread(Runnable target String name)   封装Runnable对象成为线程对象，并指定线程名称
+
+> **代码实现：**
+
+- MyThread类
+
+```java
+public class MyThread extends Thread{
+    public MyThread() {
+    }
+
+    public MyThread(String name) {
+        // 为当前线程对象设置名称，送给父类的有参构造器初始化名称
+        super(name);
+    }
+
+    @Override
+    public void run() {
+        for (int i = 0; i < 5; i++ ) {
+            System.out.println(Thread.currentThread().getName() + "输出" + i);
+        }
+    }
+}
+```
+
+* 测试类
+
+```java
+public class ThreadDemo1 {
+    public static void main(String[] args) {
+        Thread t1 = new MyThread("1号");
+//        t1.setName("1号");  // set方法设置名字
+        t1.start();
+        System.out.println(t1.getName());
+
+        Thread t2 = new MyThread("2号");
+//        t2.setName("2号");  // set方法设置名字
+        t2.start();
+        System.out.println(t2.getName());
+
+        // 哪个线程执行它，它就得到哪个线程对象（当前线程对象）
+        Thread m = Thread.currentThread();
+        System.out.println(m.getName());
+
+        for (int i = 0; i < 5; i++) {
+            System.out.println("main输出：" + i);
+        }
+
+    }
+}
+
+```
+
+> **Thread类的线程休眠方法**
+
+* public static void sleep(long time)    让当前线程休眠指定的时间后再继续执行，单位为毫秒。
+
+> **代码实现：**
+
+```java
+public static void main(String[] args) throws Exception {
+        for (int i = 0; i < 5; i++) {
+            System.out.println("输出：" + i);
+            if (i == 2){
+                // 让进程休眠
+                // 段子：项目经理让我加上这行代码，如果用户愿意交钱，我就注释掉
+                Thread.sleep(3000);
+            }
+        }
+    }
+```
+
+> **总结**
+
+* Thread常用方法
+
+|               方法名称                |                     说明                      |
+| :-----------------------------------: | :-------------------------------------------: |
+|           String getName()            | 获取当前线程的名称，默认线程名称是Thread-索引 |
+|       void setName(String name)       |                 设置线程名称                  |
+| public static Thread currentThread(): |      返回对当前正在执行的线程对象的引用       |
+|  public static void sleep(long time)  |      让线程休眠指定的时间，单位为毫秒。       |
+|           public void run()           |                 线程任务方法                  |
+|          public void start()          |                 线程启动方法                  |
+
+* Thread常用构造器
+
+|                   构造器                    |                    说明                    |
+| :-----------------------------------------: | :----------------------------------------: |
+|         public Thread(String name)          |           可以为当前线程指定名称           |
+|       public Thread(Runnable target）       |        把Runnablej对象交给线程对象         |
+| public Thread(Runnable target String name） | 把Runnable对像交给线程对象，并指定线程名称 |
+
+
+
+# 四、线程安全
+
+## 1、线程安全问题是什么、发生的原因
+
+* **多个线程同时操作同一个共享资源的时候可能会出现业务安全问题，称为线程安全问题。**
+
+> **取钱模型演示**
+
+* 需求：小明和小红是一对夫妻，他们有一个共同的账户，余额是10万元。
+
+* 如果小明和小红同时来取钱，而且2人都要取钱10万元，可能出现什么问题呢？
+
+![](https://pic1.imgdb.cn/item/63523a0016f2c2beb1cc93a1.jpg)
+
+> **线程安全问题出现的原因**
+
+* 多线程并发
+* 同时访问共享资源
+* 存在修改共享资源
+
+
+
+## 2 线程安全问题案例模拟
+
+> **案例：取钱业务**
+
+![](https://pic1.imgdb.cn/item/63523aa716f2c2beb1cd5e55.jpg)
+
+> **代码实现：**
+
+* 账户类Account
+
+```java
+public class Account {
+    private String cardID;
+    private double money;
+
+    public Account() {
+    }
+
+    public Account(String cardID, double money) {
+        this.cardID = cardID;
+        this.money = money;
+    }
+
+    public String getCardID() {
+        return cardID;
+    }
+
+    public void setCardID(String cardID) {
+        this.cardID = cardID;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
+    }
+
+    /**
+     * 小明小红取钱
+     */
+    public void drawMoney(Double money) {
+        // 1、先看是谁来取钱
+        String name= Thread.currentThread().getName();
+        // 2、判断账户是否够钱
+        if (this.money >= money){
+            // 2、取钱
+            System.out.println(name + "取钱成功，取出：" + money);
+            // 3、更新余额
+            this.money -= money;
+            System.out.println(name + "取钱后。剩余：" + this.money);
+        }else {
+            // 4、余额不足
+            System.out.println(name + "来取钱，余额不足!");
+        }
+
+    }
+}
+```
+
+* 取钱线程类DrawThread
+
+```java
+public class DrawThread extends Thread{
+    // 接受处理的账户对象
+    private Account acc;
+    public DrawThread(Account acc , String name){
+        super(name);
+        this.acc = acc;
+    }
+    @Override
+    public void run() {
+        // 小明 小红 取钱
+        acc.drawMoney(100000.0);
+    }
+}
+
+```
+
+* 测试类 ThreadDemo
+
+```java
+ public static void main(String[] args) {
+        // 1、定义线程类，创建一个共享的账户对象
+        Account acc = new Account("FF-521",100000);
+
+        // 2、创建两个线程对象，代表小明小红同时进来了
+        new DrawThread(acc , "小明").start();
+        new DrawThread(acc , "小红").start();
+
+    }
+```
+
+* 运行结果
+
+![](https://pic1.imgdb.cn/item/63523f7016f2c2beb1d36655.jpg)
+
+> **线程安全问题发生的原因是什么？**
+
+* 多个线程同时访问同一个共享资源且存在修改该资源。
+
+
+
+# 五、线程同步
+
+## 1、同步思想概述
+
+### 1.1 线程同步
+
+* **为了解决线程安全问题**
+
+> **取钱案例出现问题的原因**
+
+* 多个线程同时执行，发现账户都是够钱的。
+
+> **如何才能保证线程安全呢？**
+
+* 让多个线程实现先后依次访问共享资源，这样就解决了安全问题
+
+
+
+### 1.2 线程同步的核心思想
+
+* **==加锁，==把共享资源进行上锁，每次只能一个线程进入访问完毕以后解锁，然后其他线程才能进来。**
+
+> **图解**
+
+* **小红先进来取走钱**
+
+![](https://pic1.imgdb.cn/item/6352412f16f2c2beb1d5a114.jpg)
+
+* **小红出来后，小明再进来发现余额不足**
+
+![](https://pic1.imgdb.cn/item/6352417416f2c2beb1d5fdff.jpg)
+
+> 线程同步解决安全问题的思想是什么？
+
+* **==加锁：==让多个线程实现先后依次访问共享资源，这样就解决了安全问题。**
+
+
+
+## 2、方式一：同步代码块
+
+### 1.1 同步代码块
+
+* **作用**：把出现线程安全问题的核心代码给上锁。
+* **原理**：每次只能一个线程进入，执行完毕后自动解锁，其他线程才可以进来执行。
+
+> **格式：**
+
+* synchronized ( 同步锁对象 ) {
+
+  ​		操作共享资源的代码（ 核心代码 ）
+
+  }
+
+> **锁对象要求**
+
+* **理论上：锁对象只要对于当前同时执行的线程来说是同一个对象即可。**
+
+> **代码实现：**
+
+* 在Account对象中的取钱方法drawMoney中选中需要加锁的代码，Ctrl+Alt+T 选择第9个环绕方式**synchronized**，在括号内起一个对象名，就可以完成同步代码块的加锁
+
+```java
+public class Account {
+    private String cardID;
+    private double money;
+
+    public Account() {
+    }
+
+    public Account(String cardID, double money) {
+        this.cardID = cardID;
+        this.money = money;
+    }
+
+    public String getCardID() {
+        return cardID;
+    }
+
+    public void setCardID(String cardID) {
+        this.cardID = cardID;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
+    }
+
+    /**
+     * 小明小红取钱
+     */
+    public void drawMoney(Double money) {
+        // 1、先看是谁来取钱
+        String name= Thread.currentThread().getName();
+        // 同步代码块
+        // 小明 小红
+        synchronized ("quq") {
+            // 2、判断账户是否够钱
+            if (this.money >= money){
+                // 2、取钱
+                System.out.println(name + "取钱成功，取出：" + money);
+                // 3、更新余额
+                this.money -= money;
+                System.out.println(name + "取钱后。剩余：" + this.money);
+            }else {
+                // 4、余额不足
+                System.out.println(name + "来取钱，余额不足!");
+            }
+        }
+
+
+    }
+}
+```
+
+* 加上同步代码块之后的运行结果为：
+
+![](https://pic1.imgdb.cn/item/6352482616f2c2beb1df4a73.jpg)
+
+
+
+### 2.2 同步代码块的优化
+
+> **锁对象用任意唯一的对象好不好呢？**
+
+* 不好，会影响其他无关线程的执行。
+  * 如果有另一对夫妻小黑小白来取钱，用另个账户，但是也需要等小明小红的线程
+
+> **锁对象的规范要求**
+
+* 规范上：建议使用共享资源作为锁对象
+* 对于**实例对象**建议使用**this**作为锁对象
+* 对于**静态方法**建议使用**字节码（类名.class）**对象作为锁对象
+
+> **代码修改：**
+
+* 将同步代码块的对象名改为账户，使用this来调用识别当前的账户
+
+```java
+ // this = acc 共享账户
+        synchronized (this) {
+            // 2、判断账户是否够钱
+            if (this.money >= money){
+                // 2、取钱
+                System.out.println(name + "取钱成功，取出：" + money);
+                // 3、更新余额
+                this.money -= money;
+                System.out.println(name + "取钱后。剩余：" + this.money);
+            }else {
+                // 4、余额不足
+                System.out.println(name + "来取钱，余额不足!");
+            }
+        }
+```
+
+
+
+### 2.3 总结
+
+> **1、同步代码块是如何实现线程安全的？**
+
+* 对出现问题的核心代码使用synchronized进行加锁
+* 每次只能一个线程占锁进入访问
+
+> **2、同步代码块的同步锁对象有什么要求？**
+
+* 对于**实例对象**建议使用**this**作为锁对象
+* 对于**静态方法**建议使用**字节码（类名.class）**对象作为锁对象
+
+
+
+## 3、方式二：同步方法
+
+### 3.1 同步方法
+
+* 作用：把出现线程安全问题的核心方法给上锁。
+* 原理：每次只能一个线程进入，执行完毕以后自动解锁，其他线程才可以进来执行。
+
+> **格式：**
+
+* 修饰符  **synchronized**  返回值类型  方法名称（形参列表）{
+
+  ​			操作共享资源的代码
+
+  }
+
+> **代码实现：**
+
+* 只需要给Account对象类中的取钱方法drawMoney加上synchronized修饰就可以了
+
+```java
+public synchronized void drawMoney(Double money) {
+        // 1、先看是谁来取钱
+        String name= Thread.currentThread().getName();
+        // 2、判断账户是否够钱
+        if (this.money >= money){
+            // 2、取钱
+            System.out.println(name + "取钱成功，取出：" + money);
+            // 3、更新余额
+            this.money -= money;
+            System.out.println(name + "取钱后。剩余：" + this.money);
+        }else {
+            // 4、余额不足
+            System.out.println(name + "来取钱，余额不足!");
+        }
+```
+
+* 运行结果：
+
+![](https://pic1.imgdb.cn/item/6352482616f2c2beb1df4a73.jpg)
+
+
+
+### 3.2 同步方法的底层原理
+
+* 同步方法其实底层也是有隐式锁对象的，只是锁的范围是整个方法代码。
+* 如果方法是实例方法：同步方法默认用**this**作为的锁对象。但是代码要高度面向对象！
+* 如果方法是静态方法：同步方法默认用**类名.class**作为的锁对象。
+
+> **1、是同步代码块好还是同步方法好一点？**
+
+* 同步代码块锁的范围更小，同步方法锁的范围更大。
+
+* 但在实际开发中，同步方法的可读性和书写都要好一点，用的更多一些
+
+
+
+### 3.3 总结
+
+> **1、同步方法是如何保证线程安全的？**
+
+* **对出现问题的核心方法使用synchronized修饰**
+* **每次只能一个线程占锁进入访问**
+
+> **2、同步方法的同步锁对象的原理？**
+
+* **对于实例方法默认使用this作为锁对象。**
+* **对于静态方法默认使用类名.classi对象作为锁对象。**
+
+
+
+## 4、方式三：Lock锁
+
+### 4.1 Lock锁
+
+* 为了更清晰的表达如何加锁和释放锁，JDK5以后提供了一个新的锁对象Lock,更加灵活、方便。
+* Lock实现提供比使用synchronized方法和语句可以获得更广泛的锁定操作。
+* Lock是接口不能直接实例化，这里采用它的实现类ReentrantLock来构建Lock锁对象。
+
+|       方法名称        |          说明          |
+| :-------------------: | :--------------------: |
+| public ReentranLock() | 获取Lock锁的实验类对象 |
+
+
+
+### 4.2 Lock 的 API
+
+|   方法名称    |  说明  |
+| :-----------: | :----: |
+|  void lock()  | 获得锁 |
+| void unlock() | 释放锁 |
+
+
+
+### 4.3 idea实现代码
+
+* **为了防止加锁之后出现异常导致死锁，加上try{...}finally{...}使其无论是否出现异常都会释放锁**
+
+```java
+public class Account {
+    private String cardID;
+    private double money;
+    // 加上final修饰后：锁对象是唯一不可替换的
+    private final Lock lock = new ReentrantLock();
+    public Account() {
+    }
+
+    public Account(String cardID, double money) {
+        this.cardID = cardID;
+        this.money = money;
+    }
+
+    public String getCardID() {
+        return cardID;
+    }
+
+    public void setCardID(String cardID) {
+        this.cardID = cardID;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
+    }
+
+    /**
+     * 小明小红取钱
+     */
+    public void drawMoney(Double money) {
+        // 1、先看是谁来取钱
+        String name= Thread.currentThread().getName();
+        lock.lock();
+        try {
+            // 2、判断账户是否够钱
+            if (this.money >= money){
+                // 2、取钱
+                System.out.println(name + "取钱成功，取出：" + money);
+                // 3、更新余额
+                this.money -= money;
+                System.out.println(name + "取钱后。剩余：" + this.money);
+            }else {
+                // 4、余额不足
+                System.out.println(name + "来取钱，余额不足!");
+            }
+        } finally {
+            lock.unlock(); // 解锁
+        }
+
+    }
+}
+```
+
+* 运行结果：
+
+![](https://pic1.imgdb.cn/item/6352482616f2c2beb1df4a73.jpg)
+
+
+
+# 六、线程通信（了解）
+
+## 1、什么是线程通信、如何实现？
+
+* **所谓线程通信就是线程间相互发送数据，线程通信通常通过共享一个数据的方式实现。**
+* **线程间会根据共享数据的情况决定自己该怎么做，以及通知其他线程怎么做。**
+
+
+
+## 2、线程通信常见模型
+
+* **生产者与消费者模型：生产者线程负责生产数据，消费者线程负责消费数据。**
+* **要求：生产者线程生产完数据后，唤醒消费者，然后等待自己；消费者消费完该数据后，唤醒生产者，然后等待自己。**
+  * 就是生产者干完等消费者，消费者干完等生产者
+
+
+
+## 3、线程通信案例模拟
+
+### 3.1 案例分析
+
+* 假如有这样一个场景，小明和小红有三个爸爸，爸爸们负责存钱，小明和小红负责取钱，必须一存、一取。（存完必须花完才能再存）
+
+![](https://pic1.imgdb.cn/item/635252fd16f2c2beb1ec18a3.jpg)
+
+* **线程通信的前提：**线程通信通常是在多个线程操作同一个共享资源的时候需要进行通信，且要保证线程安全。
+
+> **Object类的等待和唤醒方法：**
+
+|     方法名称     |                             说明                             |
+| :--------------: | :----------------------------------------------------------: |
+|   void wait()    | 让当前线程等待并释放所占锁，直到另一个线程调用notify()方法或notifyAll()方法 |
+|  void notify()   |                    唤醒正在等待的单个线程                    |
+| void notifyAll() |                    唤醒正在等待的所有线程                    |
+
+* **==注意：==**
+  * 上述方法应该使用同步锁对象进行调用
+
+
+
+### 3.2 代码实现
+
+> **ThreadDemo测试类：**
+
+```java
+public static void main(String[] args) {
+        // 目标：了解线程通信的流程。
+        // 使用3个爸爸存钱(生产者)2个孩子取钱(消费者)模拟线程通信思想（一存10w 一取10w）
+
+        // 1、创建账户对象，代表五个人共同操作账户
+        Account acc = new Account("FFFSS-32" , 0);
+
+        // 2、创建2个取钱线程代表小明和小红
+        new DrawThread(acc , "小明").start();
+        new DrawThread(acc , "小红").start();
+
+        // 3、创建3个存钱线程代表：亲爹，干爹，养爹
+        new DepositThread(acc ,  "亲爹").start();
+        new DepositThread(acc ,  "干爹").start();
+        new DepositThread(acc ,  "养爹").start();
+
+    }
+```
+
+
+
+> **DrawThread孩子线程类：**
+
+```java
+public class DrawThread extends Thread{
+    private Account acc;
+
+    public DrawThread(Account acc , String name){
+        super(name);
+        this.acc = acc;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            // 小明 小红 不断取钱
+            acc.drawMoney(100000);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+
+
+> **DepositThread父亲线程类：**
+
+```java
+public class DepositThread extends Thread{
+    private Account acc;
+
+    public DepositThread(Account acc , String name){
+        super(name);
+        this.acc = acc;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            // 亲爹 干爹 养爹     不断存钱
+            acc.deposit(100000);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+
+
+> **Account账户对象类：**
+
+```java
+public class Account {
+    private String cardID;
+    private double money;
+
+    public Account() {
+    }
+
+    public Account(String cardID, double money) {
+        this.cardID = cardID;
+        this.money = money;
+    }
+
+    public String getCardID() {
+        return cardID;
+    }
+
+    public void setCardID(String cardID) {
+        this.cardID = cardID;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
+    }
+
+    /**
+     * 小明和小红 ： 取钱
+     */
+    public synchronized void drawMoney(double money) {
+        try {
+            String name = Thread.currentThread().getName();
+            if (this.money >= money){
+                // 钱够，可取
+                System.out.println(name + "来取钱:" + money + "成功!");
+                this.money -= money;
+                System.out.println(name+ "取钱结束后，余额为：" + this.money);
+                // 没钱了
+                this.notifyAll(); // 唤醒所有线程
+                this.wait(); // 锁对象，让当前线程进入等待！
+            }else {
+                // 钱不够不可取
+                // 唤醒别人，等待自己
+                this.notifyAll(); // 唤醒所有线程
+                this.wait(); // 锁对象，让当前线程进入等待！
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *  亲爹 干爹 养爹
+     */
+    public synchronized void deposit(double money) {
+        try {
+            String name = Thread.currentThread().getName();
+            if (this.money == 0){
+                // 没钱了，存钱吧
+                this.money += money;
+                System.out.println(name + "存钱" + money + "成功！存钱后余额为：" + this.money);
+                // 有钱了，唤醒别人，等待自己
+                this.notifyAll(); // 唤醒所有线程
+                this.wait(); // 当前进程进行等待
+            }else {
+                // 有钱不存钱
+                this.notifyAll();
+                this.wait();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+}
+```
+
+
+
+> **运行结果：**
+
+![](https://pic1.imgdb.cn/item/63525b5e16f2c2beb1f7b18d.jpg)
+
+
+
+### 3.3 总结
+
+> 线程通信的三个常见方法
+
+|     方法名称     |                             说明                             |
+| :--------------: | :----------------------------------------------------------: |
+|   void wait()    | 让当前线程等待并释放所占锁，直到另一个线程调用notify()方法或notifyAll()方法 |
+|  void notify()   |                    唤醒正在等待的单个线程                    |
+| void notifyAll() |                    唤醒正在等待的所有线程                    |
+
+* **==注意：==**
+  * 上述方法应该使用同步锁对象进行调用
+
+
+
+# 七、线程池（重点）
+
+## 1、线程池概述
+
+### 1.1 什么是线程池？
+
+* 线程池就是一个可以复用线程的技术。
+
+
+
+### 1.2 不使用线程池的问题
+
+* 如果**用户每发起一个请求，后台就创建一个新线程来处理，下次新任务来了又要创建新线程，==而创建新线程的开销是很大的==，这样会严重影响系统的性能。**
+
+
+
+### 1.3 线程池工作原理
+
+* 比如说线程池里规定有三个线程，前三个任务用完三个线程之后，第四个重新用第一个，以此类推，达到线程池中核心线程复用的目的。
+
+![](https://pic1.imgdb.cn/item/63525d6716f2c2beb1fa6ba0.jpg)
+
+
+
+## 2、线程池实现的API、参数说明
+
