@@ -1203,3 +1203,345 @@ public class Account {
 
 ## 2、线程池实现的API、参数说明
 
+### 2.1 谁代表线程池？
+
+* JDK5.0起提供了代表线程池的接口：ExecutorService
+
+
+
+### 2.2 如何得到线程池对象
+
+* 方式一：使用ExecutorService的实现类ThreadPoolExecutor自创建一个线程池对象
+
+![](https://pic1.imgdb.cn/item/635261fa16f2c2beb1027356.jpg)
+
+* 方式二：使用Executors(线程池的工具类)调用方法返回不同特点的线程池对象
+
+
+
+### 2.3 ThreadPoolExecutor构造器的参数说明
+
+* public ThreadPoolExecutor(  int corePoolSize,
+
+  ​													int maximumPoolSize,
+
+  ​													long keepAliveTime,
+
+  ​													TimeUnit unit,
+
+  ​													BlockingQueue<Runnable>workQueue,
+
+  ​													ThreadFactory threadFactory,
+
+  ​													RejectedExecutionHandler handler )
+
+* 参数一：指定线程池的线程数量（核心线程）：corePoolSize
+  * 不能小于0
+* 参数二：指定线程池可支持的最大线程数：maximumPoolSize
+  * 最大数量>=核心线程数量
+* 参数三：指定临时线程的最大存活时间：keepAliveTime
+  * 不能小于0
+* 参数四：指定存活时间的单位秒、分、时、天：unit
+  * 时间单位
+* 参数五：指定任务队列：workQueue
+  * 不能为null
+* 参数六：指定用哪个线程工厂创建线程：threadFactory
+  * 不能为null
+* 参数七：指定线程忙，任务满的时候，新任务来了怎么办：handler
+  * 不能为null
+
+
+
+### 2.4 线程池常见面试题
+
+> 临时线程什么时候创建啊？
+
+* 新任务提交时发现核心线程都在忙，任务队列也满了，并且还可以创建临时线程，此时才会创建临时线程。
+
+> 什么时候会开始拒绝任务？
+
+* 核心线程和临时线程都在忙，任务队列也满了，新的任务过来的时候才会开始任务拒绝。
+
+ 
+
+### 2.5 总结
+
+> **1、谁代表线程池**
+
+* ExecutorService接口
+
+> **2、ThreadPoolExecutor实现线程池对象的七个参数是什么意思**
+
+* 使用线程池的实现类ThreadPoolExecutor
+
+public ThreadPoolExecutor(  int corePoolSize,
+
+​													int maximumPoolSize,
+
+​													long keepAliveTime,
+
+​													TimeUnit unit,
+
+​													BlockingQueue<Runnable>workQueue,
+
+​													ThreadFactory threadFactory,
+
+​													RejectedExecutionHandler handler )
+
+
+
+## 3、线程池处理Runnable任务
+
+### 3.1 ThreadPoolExecutort创建线程池对象示例
+
+![](https://pic1.imgdb.cn/item/63527f6e16f2c2beb12e59a8.jpg)
+
+* **ExecutorService的常用方法**
+
+|              方法名称              |                             说明                             |
+| :--------------------------------: | :----------------------------------------------------------: |
+|   void execute(Runnable command)   |     执行任务/命令，没有返回值，一般用来执行Runnable任务      |
+| Future<T> submit(Callable<T> task) | 执行任务，返回未来任务对像获取线程结果，一般全来执行Callable任务 |
+|          void shutdown()           |                  等任务执行完毕后关闭线程池                  |
+|    List<Runnable> shutdownNow()    |   立交刻关闭。停止正在执行的任务，并返回队列中末执行的任务   |
+
+* **新任务拒绝策略**
+
+|                  策略                  | 详解                                                        |
+| :------------------------------------: | ----------------------------------------------------------- |
+|     ThreadPoolExecutor.AbortPolicy     | 丢弃任务并抛出RejectedExecutionException.异常。是默认的策略 |
+|    ThreadPoolExecutor.DiscardPolicy    | 丢弃任务，但是不抛出异常这是不推荐的做法                    |
+| ThreadPoolExecutor.DiscardoldestPolicy | 抛弃队列中等待最久的任务然后把当前任务加入队列中            |
+|  ThreadPoolExecutor.CallerRunsPolicy   | 由主线程负责调用任务的ru0方法从而绕过线程池直接执行         |
+
+
+
+### 3.2 总结
+
+* 线程池如何处理Runnable任务
+  * 使用ExecutorService的方法：
+  * void execute(Runnable target)
+
+
+
+## 4、线程池处理Callable任务
+
+### 3.1 常用方法
+
+|             方法名称             |                          说明                          |
+| :------------------------------: | :----------------------------------------------------: |
+|  void execute(Runnable command)  |  执行任务/命令，设有返回值，一般用来执行Runnable任务   |
+| Future<T>submit(Callable<T>task) |     执行Ca11ab1e任务，返回未来任务对象获取线程结果     |
+|         void shutdown()          |               等任务执行完毕后关闭线程池               |
+|   List<Runnable>shutdownNow()    | 立刻关闭，停止正在执行的任务。并返回队列中未执行的任务 |
+
+
+
+### 3.2 代码
+
+* MyCallable线程类
+
+```java
+public class MyCallable implements Callable<String> {
+    private int n;
+
+    public MyCallable(int n) {
+        this.n = n;
+    }
+
+    /**
+     * 2、重写call方法
+     */
+    @Override
+    public String call() throws Exception {
+        int sum = 0;
+        for (int i = 1; i < n; i++) {
+            sum += i;
+        }
+        return Thread.currentThread().getName() + "执行1-" + n + "的和。结果是：" + sum;
+    }
+}
+```
+
+* ThreadPoolDemo2测试类
+
+```
+public static void main(String[] args) throws Exception {
+        // 1、创建线程池对象
+        ExecutorService pool = new ThreadPoolExecutor(3, 5,
+                6, TimeUnit.SECONDS, new ArrayBlockingQueue<>(5),
+                Executors.defaultThreadFactory() , new ThreadPoolExecutor.AbortPolicy());
+
+        // 2、给任务线程池处理
+       Future<String> f1 = pool.submit(new MyCallable(100));
+       Future<String> f2 = pool.submit(new MyCallable(200));
+       Future<String> f3 = pool.submit(new MyCallable(300));
+       Future<String> f4 = pool.submit(new MyCallable(400));
+
+        System.out.println(f1.get());
+        System.out.println(f2.get());
+        System.out.println(f3.get());
+        System.out.println(f4.get());
+
+    }
+```
+
+
+
+### 3.3 总结
+
+> 线程池如何处理Callable任务，并得到任务执行完后返回的结果。
+
+* 使用ExecutorService的方法：
+* Future<T>submit(Callable<T>command)
+
+
+
+## 5、Executors工具实现线程池
+
+### 5.1 Executors得到线程池对象的常用方法
+
+* Executors:线程池的工具类通过调用方法返回不同类型的线程池对象。
+
+|                           方法名称                           | 说明                                                         |
+| :----------------------------------------------------------: | ------------------------------------------------------------ |
+|     public static ExecutorService newCachedThreadPool()      | 线程数量随着任务增加而增加，如果线程任务执行完毕且空闲了一段时间侧会被回收掉。 |
+| public static ExecutorService newFixedThreadPool(int nThreads) | 创建固定线程数量的线程池，如果某个线程因为执行异常而结束，那么线程池会补充一个新线程替代它。 |
+|   public static ExecutorService newsingleThreadExecutor()    | 创建只有一个线程的线程池对象，如果该线程出现异常而结束，那么线程池会补充一个新线程。 |
+| public static ScheduledExecutorService newScheduledThreadPool(int corePoolsize) | 创建一个线程池，可以实现在给定的延迟后运行任务，或者定期执行任务。 |
+
+注意：Executors的底层其实也是基于线程池的实现ThreadPoolExecutor创建线程池对象的。
+
+
+
+### 5.2 注意事项
+
+![](https://pic1.imgdb.cn/item/635651b116f2c2beb1d055de.jpg)
+
+![](https://pic1.imgdb.cn/item/6356528816f2c2beb1d1f4ce.jpg)
+
+
+
+### 5.3 总结
+
+> 1、Executors工具类底层是基于什么方式实现的线程池对象？
+
+* 线程池ExecutorService的实现类：ThreadPoolExecutor
+
+> 2、Executors是否适合做大型互联网场景的线程池方案？
+
+* 不合适。
+* 建议使用ThreadPoolExecutor来指定线程池参数，这样可以明确线程池的运行规则，规避资源耗尽的风险。
+
+
+
+# 八、定时器
+
+## 1、定时器概述
+
+### 1.1 什么是定时器
+
+* 定时器是一种控制任务延时调用，或者周期调用的技术。
+* 作用：闹钟、定时邮件发送。
+
+
+
+### 1.2 定时器的实现方式
+
+* 方式一：Timer
+* 方式二：ScheduledExecutorService
+
+
+
+## 2、Timer定时器
+
+### 2.1 Timer定时器的构造器和常用方法
+
+|     构造器     |        说明         |
+| :------------: | :-----------------: |
+| public Timer() | 创建Timer定时器对象 |
+
+
+
+|                            方法                             |                   说明                    |
+| :---------------------------------------------------------: | :---------------------------------------: |
+| public void schedule(TimerTask task,long delay,long period) | 开启一个定时器，按照计划处理TimerTask任务 |
+
+
+
+### 2.2 idea代码实现
+
+```java
+public static void main(String[] args) {
+    // 1、创建Timer定时器
+    Timer timer = new Timer(); // 定时器本身是个单线程
+    // 2、调用方法：处理定时任务
+    timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+            System.out.println(Thread.currentThread().getName() + "执行一次~~");
+        }
+    }, 3000, 2000);
+}
+```
+
+
+
+### 2.3 Timer定时器的特点和存在的问题
+
+* 1、Timer是单线程，处理多个任务按照顺序执行，存在延时与设置定时器的时间有出入。
+* 2、可能因为其中的某个任务的异常使Timer线程死掉，从而影响后续任务执行。
+
+
+
+## 3、ScheduledExecutorService定时器
+
+### 3.1 ScheduledExecutorService的常用方法
+
+* ScheduledExecutorService是jdk1.S中引入了并发包，目的是为了弥补Timer的缺陷，ScheduledExecutorService内部为线程池。
+
+  
+
+  |                       Executors的方法                        |      说明      |
+  | :----------------------------------------------------------: | :------------: |
+  | public static ScheduledExecutorService newScheduledThreadPool(int corePoolsize) | 得到线程池则象 |
+
+
+
+|                ScheduledExecutorService的方法                |     说明     |
+| :----------------------------------------------------------: | :----------: |
+| public ScheduledFuture<?>scheduleAtFixedRate(Runnable command,long initialDelay,long period,TimeUnit unit) | 周期调度方法 |
+
+
+
+### 3.2 idea代码实现
+
+```java
+ public static void main(String[] args) {
+        // 1、创建ScheduledExecutorService线程池，做定时器
+        ScheduledExecutorService pool = Executors.newScheduledThreadPool(3);
+
+        // 2、开启定时任务
+        pool.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println(Thread.currentThread().getName() + "执行输出：AAA ===> " + new Date());
+            }
+        }, 0 ,2, TimeUnit.SECONDS);
+
+        pool.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println(Thread.currentThread().getName() + "执行输出：BBB ===> " + new Date());
+            }
+        }, 0, 2, TimeUnit.SECONDS);
+
+
+    }
+```
+
+
+
+### 3.3 ScheduledExecutorService的优点
+
+* 基于线程池，某个任务的执行情况不会影响其他定时任务的执行。
