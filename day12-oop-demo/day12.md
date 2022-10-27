@@ -1268,3 +1268,257 @@ public class ServerReaderRunnable implements Runnable{
 
 * 服务端可以复用线程处理多个客户端，可以避免系统瘫痪。
 * **适合客户端通信时长较短的场景。**
+
+
+
+# 七、TCP通信实战案例
+
+## 1、即时通信
+
+### 1.1 思考
+
+> **1、即时通信是什么含义，要实现怎么样的设计**
+
+* 即时通信，是指一个客户端的消息发出去，其他客户端可以接收到。
+* 之前我们的消息都是发给服务端的。
+* 即时通信需要进行端口转发的设计思想。
+
+### 1.2 端口转发
+
+* 客户端发送给服务端，服务端再调用其他管道转发
+
+* 群发：
+
+![](https://pic1.imgdb.cn/item/6358827516f2c2beb17f6ce1.jpg)
+
+* 单发：
+
+![](https://pic1.imgdb.cn/item/635882e816f2c2beb17fac96.jpg)
+
+### 1.3 idea代码实现
+
+> **服务端ServerDemo2类：**
+
+```java
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ServerDemo2 {
+    // 定义一个静态的List集合存储当前全部在线的socket管道
+    public static List<Socket> allOnlineSocket = new ArrayList<>();
+    public static void main(String[] args) throws Exception{
+        System.out.println("=========服务端启动=========");
+        // 1、注册端口
+        ServerSocket serverSocket = new ServerSocket(9999);
+
+        // 循环接收客户端的socket管道请求
+        while (true){
+            // 2、开始接收客户端的socket管道连接请求
+            // 注意：在这里等待客户端的socket管道连接
+            Socket socket = serverSocket.accept();
+            System.out.println(socket.getRemoteSocketAddress() + "上线了！");
+            allOnlineSocket.add(socket);    // 上线完成
+            // 创建一个线程来单独处理这个socket管道
+            new ServerReaderThread(socket).start();
+        }
+
+    }
+static class ServerReaderThread extends Thread{
+        private Socket socket;
+
+        public ServerReaderThread (Socket socket){
+            this.socket = socket;
+        }
+
+    @Override
+    public void run() {
+        try {
+            InputStream is = socket.getInputStream();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String line;
+            while ((line = br.readLine()) != null){
+                System.out.println(socket.getRemoteSocketAddress() + "发来了" + line);
+                // 把这个消息进行端口转发给全部客户端socket管道
+                sendMsgToAll(line);
+            }
+        }catch (Exception e){
+            System.out.println(socket.getRemoteSocketAddress() + "下线了");
+            ServerDemo2.allOnlineSocket.remove(socket);
+        }
+    }
+
+    private void sendMsgToAll(String msg) throws Exception {
+        for (Socket socket : ServerDemo2.allOnlineSocket) {
+            PrintStream ps = new PrintStream(socket.getOutputStream());
+            ps.println(msg);
+            ps.flush();
+        }
+    }
+}
+}
+```
+
+> **客户端CelintDemo1类：**
+
+```java
+import java.io.*;
+import java.net.Socket;
+import java.util.Scanner;
+
+/**
+ *  1、客户端发送消息
+ *  2、客户端随时可能需要收到消息
+ */
+public class ClientDemo1 {
+    public static void main(String[] args) throws Exception {
+        System.out.println("========客户端启动========");
+        // 1、连接与服务端的Socket管道连接
+        Socket socket = new Socket("192.168.43.173" , 9999);
+
+        // 创建一个独立的线程，专门负责这个客户端的读消息（服务端随时可能转发消息过来）
+        new ClientReaderThread(socket).start();
+
+        // 2、从Socket管道中得到一个字节输出流管道
+        OutputStream os = socket.getOutputStream();
+        // 3、把低级的输出流包装成高级的打印流
+        PrintStream ps = new PrintStream(os);
+        // 4、发送数据
+        Scanner sc = new Scanner(System.in);
+        while (true){
+            System.out.println("请说：");
+            String msg = sc.nextLine();
+            ps.println(msg);
+            ps.flush();
+        }
+    }
+    static class ClientReaderThread extends Thread{
+        private Socket socket;
+
+        public ClientReaderThread (Socket socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                // 3、字节输入流
+                InputStream is = socket.getInputStream();
+                // 4、把低级的字节输入流包装成高级的缓冲字节输入流
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                // 5、按照行读读取
+                String line;
+                while ((line = br.readLine()) != null){
+                    System.out.println("收到消息:" +line);
+                }
+            }catch (Exception e){
+                System.out.println("你已被t出群聊");
+            }
+        }
+    }
+
+
+}
+```
+
+> **多开客户端运行结果：**
+
+![](https://pic1.imgdb.cn/item/6358997d16f2c2beb190a246.jpg)
+
+### 1.4 总结
+
+> 即时通信是什么含义，要实现怎么样的设计？
+
+* 即时通信，是指一个客户端的消息发出去，其他客户端可以接收
+* 即时通信需要进行端口转发的设计思想。
+* 服务端需要把在线的Socket管道存储起来
+* 一旦收到一个消息要推送给其他管道
+
+
+
+## 2、模拟BS系统
+
+### 2.1 思考
+
+> 1、之前的客户端都是什么样的
+
+* 其实就是CS架构，客户端实需要我们自己开发实现的。
+
+> 2、BS结构是什么样的，需要开发客户端吗？
+
+* 浏览器访问服务端，不需要开发客户端。
+
+### 2.2 实现BS开发
+
+![](https://pic1.imgdb.cn/item/63589a9016f2c2beb1918ef2.jpg)
+
+* 注意：服务器必须给浏览器响应HTTP协议格式的数据，否则浏览器不识别。
+
+### 2.3HTTP响应数据的协议格式
+
+* 就是给浏览器显示的网页信息
+
+![](https://pic1.imgdb.cn/item/63589d3116f2c2beb1941687.jpg)
+
+### 2.4 代码实现
+
+```java
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class BSserverDemo {
+    public static void main(String[] args) {
+        try {
+            // 1、注册一个端口
+            ServerSocket ss = new ServerSocket(8080);
+            // 2、创建一个循环接收多个客户端的请求
+            while (true){
+                Socket socket = ss.accept();
+                // 3、交给一个独立的线程来处理！
+                new ServerReaderThread(socket).start();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+    static class ServerReaderThread extends Thread{
+        private Socket socket;
+
+        public ServerReaderThread(Socket socket){
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            try{
+                // 浏览器已经与本线程建立了Socket管道
+                // 响应消息给浏览器显示
+                PrintStream ps = new PrintStream(socket.getOutputStream());
+                // 必须响应HTTP协议格式数据,否则浏览器不认识消息
+                ps.println("HTTP/1.1 200 OK"); // 协议类型和版本 响应成功的消息
+                ps.println("Content-Type:text/html;charset=UTF-8"); //响应的数据类型:文本/网页
+                ps.println();
+                // 才可以响应数据回去给浏览器
+                ps.println("<span style='color:red; font-size:90px'> 我最爱李艳飞了！</span>");
+                ps.close();
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+### 2.5 总结
+
+> TCP通信如何实现BS请求网页信息回来呢？
+
+* 客户端使用浏览器发起请求（不需要开发客户端）
+* 服务端必须按照浏览器的协议规则响应数据。、
+* 浏览器使用什么协议规则呢？
+* HTTP协议（简单了解下）
