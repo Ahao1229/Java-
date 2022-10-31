@@ -1,0 +1,10 @@
+==============Student==============
+name = 贾四
+sex = 男
+age = 20
+className = 学习1班
+hobby = 美女，美女和美女
+==============Teacher==============
+name = 美女老师
+sex = 女
+salary = 1.0E8
