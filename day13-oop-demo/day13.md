@@ -978,3 +978,758 @@ public class ReflectDemo {
 * 也可以破坏泛型的约束性。（很突出）
 * 更重要的用途是适合：做Java高级框架
 
+
+
+# 三、注解
+
+## 1、注解概述
+
+### 1.1 注解概述、作用
+
+* Java注解(Annotation)又称Java标注，是JDK5.0引入的一种注释机制。
+* Java语言中的类、构造器、方法、成员变量、参数等都可以被注解进行标注。
+
+> 注解的作用是什么呢？
+
+* 对Java中类、方法、成员变量做标记，然后进行特殊处理，至于到底做何种处理由业务需求来决定。
+* 例如：JUnit框架中，标记了注解@Test的方法就可以被当成测试方法执行，而没有标记的就不能当成测试方法执行。
+
+### 1.2 总结
+
+> **注解的作用**
+
+* **对Java中类、方法、成员变量做标记，然后进行特殊处理。**
+* **例如：JUnit框架中，标记了注解@Test的方法就可以被当成测试方法执行，而没有标记的就不能当成测试方法执行**
+
+
+
+## 2、自定义注解
+
+### 2.1 自定义注解格式
+
+* 自定义注解就是自己做一个注解来使用
+
+![](https://pic1.imgdb.cn/item/63607f1e16f2c2beb192ef0b.jpg)
+
+> 特殊属性
+
+* value属性，如果只有一个value属性的情况下，使用value属性的时候可以省略value名称不写！
+* 但是如果有多个属性，且多个属性没有默认值，那么value名称是不能省略的。
+
+### 2.2 idea实现代码
+
+> MyBook：
+
+```java
+public @interface MyBook {
+    public String name();
+    String[] authors();
+    double price();
+
+}
+```
+
+> Book：
+
+```java
+public @interface Book {
+    String value(); // 特殊属性
+    double price();
+}
+```
+
+> AnnotationDemo1:
+
+```java
+/**
+ *  目标：学会自定义注解，掌握其定义格式和语法
+ */
+@MyBook(name="《三体》",authors = {"刘慈欣"},price = 66.6)
+public class AnnotationDemo1 {
+//    @Book(value = "/delete")
+//    @Book("/delete")
+    @Book(value = "/delete",price = 23.5)
+    public static void main(String[] args) {
+
+    }
+}
+```
+
+
+
+## 3、元注解
+
+### 3.1 元注解概述
+
+* 元注解：就是注解注解的注解
+
+> 元注解常见的有两个：
+
+* @Target：约束自定义注解只能在哪些地方使用
+* @Retention：申明注解的生命周期
+
+> @Target中可使用的值定义在ElementType枚举类中，常用值如下：
+
+* TYPE,类，接口
+* FIELD,成员变量
+* METHOD,成员方法
+* PARAMETER,方法参数
+* CONSTRUCTOR,构造器
+* LOCAL_VARIABLE,局部变量
+
+> @Retention中可使用的值定义在RetentionPolicy枚举类中，常用值如下：
+
+* SOURCE：注解只作用在源码阶段，生成的字节码文件中不存在
+* CLASS：注解作用在源码阶段，字节码文件阶段，运行阶段不存在，默认值。
+* RUNTIME:注解作用在源码阶段，字节码文件阶段，运行阶段（开发常用）
+
+### 3.2 idea代码实现
+
+> MyTest注解：
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME) // 一直活着，在运行阶段这个注解也不消失
+@Target({ElementType.METHOD,ElementType.FIELD})   // 元注解
+public @interface MyTest {
+    
+}
+```
+
+> AnnotationDemo2：
+
+```java
+/**
+ *  目标：认识元注解
+ */
+//@MyTest // 只能注解方法和成员变量
+public class AnnotationDemo2 {
+    @MyTest
+    private String name;
+
+    @MyTest
+    public void test(){
+
+    }
+
+    public static void main(String[] args) {
+
+    }
+}
+```
+
+### 3.3 总结
+
+> 元注解是什么？
+
+* 注解注解的注解
+* @Target约束自定义注解可以标记的范围。
+* @Retention用来约束自定义注解的存活范围。
+
+
+
+## 4、注解解析
+
+### 4.1 注解解析概述
+
+> 注解的解析：
+
+* 注解的操作中经常需要进行解析，注解的解析就是判断是否存在注解，存在注解就解析出内容。
+
+> 与注解解析相关的接口：
+
+* Annotation：注解的顶级接口，注解都是Annotation类型的对象
+* AnnotateElement：该接口定义了与注解解析相关的解析方法
+
+|                             方法                             |                             说明                             |
+| :----------------------------------------------------------: | :----------------------------------------------------------: |
+|          Annotation[]   getDeclaredAnnotations ( )           |          获得当前对象上使用的所有注解，返回注解数组          |
+|   T   getDeclaredAnnotation ( Class<T>   annotationClass )   |                 根据注解类型获得对应注解对象                 |
+| boolean   isAnnotationPresent   ( Class<Annotation>  annotationClass ) | 判断当前对象是否使用了指定的注解，如果使用了则返回true,否则false |
+
+* 所有的类成分Class,Method,Field,Constructor,都实现了AnnotatedElementi接口他们都拥有解析注解的能力：
+
+### 4.2 解析注解的技巧
+
+* 注解在哪个成分上，我们就先拿哪个成分对象。
+* 比如注解作用成员方法，则要获得该成员方法对应的Method对象，再来拿上面的注解
+* 比如注解作用在类上，则要该类的Class对象，再来拿上面的注解
+* 比如注解作用在成员变量上，则要获得该成员变量对应的Fild对象，再来拿上面的注解
+
+### 4.3 注解解析的案例
+
+> 需求：
+
+* 注解解析
+
+> 分析：
+
+* ① 定制注解Book1，要求如下：
+  * 包含属性：String value（）书名
+  * 包含属性：double price（）价格，默认值为100
+  * 包含属性：String[] authors（）多位作者
+  * 限制注解使用的位置：类和成员方法上
+  * 指定注解的有效范围：RUNTIME
+* ② 定义BookStore类，在嘞和成员方法上使用Book注解
+* ③ 定义AnnotationDemo3测试类获取Book注解上的数据
+
+### 4.4 idea代码实现
+
+> Book1注解：
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD,ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Book1 {
+    String value();
+    double price() default 100;
+    String[] authors();
+
+}
+```
+
+> BookStore类：
+
+```java
+@Book1(value = "《三体》",price = 99.9,authors = {"刘慈欣"})
+public class BookStore {
+
+    @Book1(value = "球状闪电",price = 59.9,authors = {"刘慈欣01"})
+    public void test(){
+
+    }
+}
+```
+
+> AnnotationDemo3测试类：
+
+```java
+/**
+ *  目标：完成注解的解析
+ */
+
+public class AnnotationDemo3 {
+    @Test
+    public void parseClass() throws Exception {
+        // a.先得到类对象
+        Class c = BookStore.class;
+        Method m = c.getDeclaredMethod("test");
+        // b.判断这个类上面是否存在这个注解
+        if (c.isAnnotationPresent(Book1.class)){
+            // c.获取该注解对象
+//            Annotation book = c.getDeclaredAnnotation(Book1.class);
+            Book1 book = (Book1) c.getDeclaredAnnotation(Book1.class);
+            System.out.println(book.value());
+            System.out.println(book.price());
+            System.out.println(Arrays.toString(book.authors()));
+        }
+        System.out.println("-------------------------------------------");
+        if (m.isAnnotationPresent(Book1.class)){
+            // c.获取该注解对象
+            Book1 book2 = (Book1) m.getDeclaredAnnotation(Book1.class);
+            System.out.println(book2.value());
+            System.out.println(book2.price());
+            System.out.println(Arrays.toString(book2.authors()));
+        }
+    }
+}
+```
+
+> 运行结果：
+
+![](https://pic1.imgdb.cn/item/6360cd4716f2c2beb169166d.jpg)
+
+### 4.5 总结
+
+> 注解解析的方式
+
+|                             方法                             |                             说明                             |
+| :----------------------------------------------------------: | :----------------------------------------------------------: |
+|          Annotation[]   getDeclaredAnnotations ( )           |          获得当前对象上使用的所有注解，返回注解数组          |
+|   T   getDeclaredAnnotation ( Class<T>   annotationClass )   |                 根据注解类型获得对应注解对象                 |
+| boolean   isAnnotationPresent   ( Class<Annotation>  annotationClass ) | 判断当前对象是否使用了指定的注解，如果使用了则返回true,否则false |
+
+
+
+## 5、注解的应用场景一：Junit框架
+
+### 5.1 案例分析
+
+> 需求：
+
+* 定义若干个方法，只要加了MyTest注解，就可以在启动时被触发执行
+
+> 分析：
+
+* ① 定义一个自定义注解MyTest,只能注解方法，存活范围是一直都在。
+* ② 定义若干个方法，只要有@MyTest注解的方法就能在启动时被触发执行，没有这个注解的方法不能执行。
+
+### 5.2 idea代码实现
+
+> MyTest注解：
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME) // 一直活着，在运行阶段这个注解也不消失
+@Target({ElementType.METHOD})   // 元注解
+public @interface MyTest {
+
+}
+```
+
+> AnnotationDemo4测试类：
+
+```java
+import java.lang.reflect.Method;
+
+public class AnnotationDemo4 {
+    @MyTest
+    public void test1(){
+        System.out.println("====test1====");
+    }
+
+    public void test2(){
+        System.out.println("====test2====");
+    }
+
+    @MyTest
+    public void test3(){
+        System.out.println("====test3====");
+    }
+
+    /**
+     *  启动菜单；有注解的才被调用
+     */
+    public static void main(String[] args) throws Exception {
+        AnnotationDemo4 t = new AnnotationDemo4();
+        // a.获取类对象
+        Class c = AnnotationDemo4.class;
+        // b.提取全部方法
+        Method[] methods = c.getDeclaredMethods();
+        // c.遍历方法，看是有有MyTest注解，有才可以跑
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(MyTest.class)){
+                // 跑它！
+                method.invoke(t);
+            }
+        }
+    }
+}
+```
+
+> 运行结果：
+
+![](https://pic1.imgdb.cn/item/6360d05716f2c2beb173060c.jpg)
+
+
+
+# 四、动态代理
+
+## 1、动态代理概述、快速入门
+
+### 1.1 代理概述
+
+> 什么是代理？
+
+* 代理指：某些场景下对象会找一个代理对象，来辅助自己完成一些工作，如：歌星（经济人），买房的人（房产中介）。
+
+> 代理主要干什么，他是如何工作的？
+
+![](https://pic1.imgdb.cn/item/6360d11d16f2c2beb1755127.jpg)
+
+* 代理主要是对对象的行为额外做一些辅助操作
+
+### 1.2 如何创建代理对象
+
+* Java中代理的代表类是：java.lang.reflect.Proxy。
+* Proxy提供了一个静态方法，用于为对象产生一个代理对象返回。
+
+![](https://pic1.imgdb.cn/item/6360d8f016f2c2beb191b02f.jpg)
+
+> Java中如何生成代理，并指定代理干什么事情
+
+![](https://pic1.imgdb.cn/item/6360d91f16f2c2beb1924dc8.jpg)
+
+![](https://pic1.imgdb.cn/item/6360d96c16f2c2beb193477d.jpg)
+
+### 1.3 idea代码实现
+
+> Kun蔡徐坤对象类：
+
+```java
+public class Kun implements Ctrl{
+    private String name;
+
+    public Kun(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void sing() {
+        System.out.println("全民制作人们大家好，我是练习时长两年半的个人练习生" + name);
+    }
+
+    @Override
+    public void jump() {
+        System.out.println("喜欢唱、跳、Rap、篮球，Music~");
+    }
+
+    @Override
+    public void rap() {
+        System.out.println("鸡你太美，baby，鸡你实在是太美，baby");
+        System.out.println("在今后的节目中,我还准备了很多我自己作词、作曲、编舞的原创作品,期待的话请多多为我投票吧!!");
+    }
+
+    @Override
+    public void basketball() {
+        System.out.println("你干嘛~~~~哎呦~~~~~");
+    }
+}
+```
+
+> Ctrl 唱跳Rap篮球 接口：
+
+```java
+public class Kun implements Ctrl{
+    private String name;
+
+    public Kun(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void sing() {
+        System.out.println("全民制作人们大家好，我是练习时长两年半的个人练习生" + name);
+    }
+
+    @Override
+    public void jump() {
+        System.out.println("喜欢唱、跳、Rap、篮球，Music~");
+    }
+
+    @Override
+    public void rap() {
+        System.out.println("鸡你太美，baby，鸡你实在是太美，baby");
+        System.out.println("在今后的节目中,我还准备了很多我自己作词、作曲、编舞的原创作品,期待的话请多多为我投票吧!!");
+    }
+
+    @Override
+    public void basketball() {
+        System.out.println("你干嘛~~~~哎呦~~~~~");
+    }
+}
+```
+
+> iKun代理对象类：
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+public class iKun {
+    /**
+     *  设计一个方法，返回一个明星对象的代理对象
+     */
+    public static Ctrl getProxy(Kun kun){
+        // 为蔡徐坤这个对象，生成一个代理对象iKun
+        /**
+         *  public static Object newProxyInstance(ClassLoader loader,
+         *                                           Class<?>[] interfaces, 对象实现的接口列表
+         *                                           InvocationHandler h)
+         */
+        return (Ctrl) Proxy.newProxyInstance(kun.getClass().getClassLoader(),
+                kun.getClass().getInterfaces(), new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        System.out.println("别黑我家哥哥，小心我家哥哥下蛋不给你吃~~~");
+                        // 真正的鲲鲲去唱歌跳舞。。。
+                        // method 正在调用的方法对象         args 代表这个方法的参数
+                        Object rs = method.invoke(kun, args);
+                        System.out.println("小黑子，漏出鸡脚了吧~~~~~~~");
+                        System.out.println();
+                        return rs;
+                    }
+                });
+    }
+}
+```
+
+> Test测试类：
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        // 目标：学习开发出一个动态代理的对象出来，理解动态代理的执行流程
+        // 1、创建一个对象（蔡徐坤）,对象的类必须实现接口
+        Kun kun = new Kun("蔡徐坤");
+        // 2、为蔡徐坤对象，生成一个代理对象iKun
+        Ctrl ikun = iKun.getProxy(kun);
+        ikun.sing(); // 走代理
+        ikun.jump();
+        ikun.rap();
+        ikun.basketball();
+    }
+}
+```
+
+> 运行结果：
+
+![](https://pic1.imgdb.cn/item/6360da9816f2c2beb1973503.jpg)
+
+### 1.4 总结
+
+> 1、代理是什么？
+
+* 一个对象，用来对被代理对象的行为额外做一些辅助工作。
+
+> 2、在Java中实现动态代理的步骤是什么样的？
+
+* 必须存在接口
+* 被代理对象需要实现接口。
+* 使用Proxy类提供的方法，的对象的代理对象。
+
+![](https://pic1.imgdb.cn/item/6360d8f016f2c2beb191b02f.jpg)
+
+> 3、通过代理对象调用方法，执行流程是什么样的？
+
+* 先走向代理
+* 代理可以为方法额外做一些辅助工作。
+* 开发真正触发对象的方法的执行。
+* 回到代理中，由代理负责返回结果给方法的调用者。
+
+## 2、动态代理的应用案例：做性能分析
+
+### 2.1 案例模拟（不用动态代理）
+
+> 模拟企业业务功能开发，并完成每个功能的性能统计
+
+* 需求：
+  * 模拟某企业用户管理业务，需包含用户登录，用户删除，用户查询功能，并要统计每个功能的耗时。
+* 分析：
+  * ①定义一个UserService表示用户业务接口，规定必须完成用户登录，用户删除，用户查询功能。
+  * ②定义一个实现类UserServicelmpl实现UserService,并完成相关功能，且统计每个功能的耗时。
+  * ③定义测试类，创建实现类对象，调用方法。
+
+### 2.2 代码实现（不使用动态代理）
+
+> UserService接口：
+
+```java
+public interface UserService {
+    String login(String loginName, String passWord);
+    void deleteUser();
+    String selectUser();
+}
+```
+
+> UserServiceImpl类：
+
+```java
+public class UserServiceImpl implements UserService{
+    @Override
+    public String login(String loginName, String passWord) {
+        long startTime = System.currentTimeMillis();
+        String rs = "登录名称和密码错误";
+        if ("admin".equals(loginName) && "123456".equals(passWord)){
+            rs = "登录成功";
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long endTime = System.currentTimeMillis();
+        System.out.println("login方法耗时：" + (endTime - startTime) / 1000.0 + "s");
+        return rs;
+    }
+
+    @Override
+    public void deleteUser() {
+        long startTime = System.currentTimeMillis();
+        try {
+            System.out.println("您正在删除用户数据中。。。");
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long endTime = System.currentTimeMillis();
+        System.out.println("deleteUser方法耗时：" + (endTime - startTime) / 1000.0 + "s");
+    }
+
+    @Override
+    public String selectUser() {
+        long startTime = System.currentTimeMillis();
+        String rs = "查询了10000个用户数据~~~";
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long endTime = System.currentTimeMillis();
+        System.out.println("login方法耗时：" + (endTime - startTime) / 1000.0 + "s");
+        return rs;
+    }
+
+}
+```
+
+> Test测试类：
+
+```java
+public static void main(String[] args) {
+    // 目标：掌握使用动态代理解决问题，理解使用动态代理的优势
+    UserService userService = new UserServiceImpl();
+    System.out.println(userService.login("admin", "123456"));
+    System.out.println(userService.selectUser());
+    userService.deleteUser();
+}
+```
+
+> 运行结果：
+
+![](https://pic1.imgdb.cn/item/6360e1bd16f2c2beb1ad9813.jpg)
+
+> **本案例出现的问题：**
+
+* 业务对象的的每个方法都要进行性能统计，存在大量重复的代码。
+
+### 2.3 案例优化（使用动态代理）
+
+> 优化的关键步骤：
+
+* 1.必须有接口，实现类要实现接口（代理通常是基于接口实现的）
+* 2.创建一个实现类的对象，该对象为业务对象，紧接着为业务对象做一个代理对象。
+
+![](https://pic1.imgdb.cn/item/6360e55316f2c2beb1b9171a.jpg)
+
+### 2.4 代码实现（使用动态代理）
+
+> UserService接口：
+
+```java
+public interface UserService {
+    String login(String loginName, String passWord);
+    void deleteUser();
+    String selectUser();
+    void deleteById(int id);
+}
+```
+
+> UserServiceImpl类：
+
+```java
+public class UserServiceImpl implements UserService{
+    @Override
+    public String login(String loginName, String passWord) {
+
+        String rs = "登录名称和密码错误";
+        if ("admin".equals(loginName) && "123456".equals(passWord)){
+            rs = "登录成功";
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return rs;
+    }
+
+    @Override
+    public void deleteUser() {
+        try {
+            System.out.println("您正在删除用户数据中。。。");
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String selectUser() {
+        String rs = "查询了10000个用户数据~~~";
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+       return rs;
+    }
+
+    @Override
+    public void deleteById(int id) {
+        try {
+            System.out.println("根据用户的id：" + id + "删除了它");
+            Thread.sleep(1200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+> ProxyUtil代理类：
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+public class ProxyUtil {
+    /**
+     * 通过一个静态方法为用户业务对象返回一个代理对象
+     */
+    public static UserService getProxy(UserService obj){
+        return (UserService) Proxy.newProxyInstance(obj.getClass().getClassLoader(),
+                obj.getClass().getInterfaces(), new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        long startTime = System.currentTimeMillis();
+
+                        // 真正触发对象的行为执行
+                        Object rs = method.invoke(obj, args);
+
+                        long endTime = System.currentTimeMillis();
+                        System.out.println(method.getName() + "方法耗时：" + (endTime - startTime) / 1000.0 + "s");
+                        return rs;
+                    }
+                });
+    }
+}
+```
+
+> Test测试类：
+
+```java
+public class Test {
+    public static void main(String[] args) {
+        // 目标：掌握使用动态代理解决问题，理解使用动态代理的优势
+        UserService userService = ProxyUtil.getProxy(new UserServiceImpl());
+        System.out.println(userService.login("admin", "123456"));
+        System.out.println(userService.selectUser());
+        userService.deleteUser();
+    }
+}
+```
+
+
+
+## 3、动态代理的优点
+
+* 可以在不改变方法源码的情况下，实现对方法功能的增强，提高了代码的复用。
+* 简化了编程工作、提高了开发效率，同时提高了软件系统的可扩展性。
+* 可以为被代理对象的所有方法做代理。
+* 非常的灵活，支持任意接口类型的实现类对象做代理，也可以直接为接本身做代理。
