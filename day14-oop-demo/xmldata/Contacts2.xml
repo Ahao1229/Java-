@@ -19,7 +19,7 @@
         <contact>
             <info>
 
-                <name>我是西门庆</name>
+                <name id="888">我是西门庆</name>
             </info>
          </contact>
     </user>

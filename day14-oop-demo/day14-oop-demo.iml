@@ -18,5 +18,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jaxen-1.1.2" level="project" />
   </component>
 </module>
